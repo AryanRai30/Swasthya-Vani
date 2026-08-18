@@ -47,7 +47,7 @@ export const HealthAlertsSection: React.FC<HealthAlertsSectionProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8" id="health-alerts-root">
+    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8" id="health-alerts-root">
       
       {/* Header & Notification Sub Box */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">

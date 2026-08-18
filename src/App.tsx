@@ -72,7 +72,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/60 text-slate-900 font-sans antialiased selection:bg-teal-500 selection:text-white" id="app-root">
+    <div className="min-h-screen w-full max-w-full flex flex-col bg-slate-50/60 text-slate-900 font-sans antialiased selection:bg-teal-500 selection:text-white overflow-x-clip" id="app-root">
       
       {/* Global Top Navbar */}
       <Navbar
@@ -88,7 +88,7 @@ export default function App() {
       />
 
       {/* Main Content View Switcher */}
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-full">
         {activeTab === 'home' && (
           <HomeSection
             setActiveTab={setActiveTab}

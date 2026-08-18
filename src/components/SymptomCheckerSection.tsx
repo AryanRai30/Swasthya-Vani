@@ -194,7 +194,8 @@ Please provide an in-depth breakdown of potential conditions, what tests a physi
   );
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6" id="symptom-checker-root">
+    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6" id="symptom-checker-root">
+      <div className="max-w-4xl mx-auto space-y-6">
       
       {/* Header */}
       <div>
@@ -709,6 +710,7 @@ Please provide an in-depth breakdown of potential conditions, what tests a physi
         </div>
       )}
 
+      </div>
     </div>
   );
 };

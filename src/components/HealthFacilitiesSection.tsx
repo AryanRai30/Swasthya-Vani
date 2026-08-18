@@ -51,7 +51,7 @@ export const HealthFacilitiesSection: React.FC<HealthFacilitiesSectionProps> = (
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6" id="health-facilities-root">
+    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6" id="health-facilities-root">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">

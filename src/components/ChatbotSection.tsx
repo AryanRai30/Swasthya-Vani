@@ -289,9 +289,10 @@ Conversation reset. How can I assist your health and disease awareness questions
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4" id="chatbot-section-root">
-      
-      {/* Top Banner with Title, Language & Clear Controls */}
+    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4" id="chatbot-section-root">
+      <div className="max-w-4xl mx-auto space-y-4">
+        
+        {/* Top Banner with Title, Language & Clear Controls */}
       <div className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         
         <div className="flex items-center gap-3">
@@ -633,6 +634,7 @@ Conversation reset. How can I assist your health and disease awareness questions
           <Send className="w-5 h-5" />
         </button>
       </form>
+      </div>
 
     </div>
   );

@@ -16,8 +16,8 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onOpenEmergency, setActiveTab }) => {
   return (
-    <footer className="bg-slate-900 text-slate-300 pt-12 pb-8 border-t border-slate-800" id="main-footer">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer className="bg-slate-900 text-slate-300 pt-12 pb-8 border-t border-slate-800 w-full" id="main-footer">
+      <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Prominent Safety & Medical Disclaimer Banner */}
         <div className="mb-10 p-5 rounded-2xl bg-slate-800/90 border border-amber-500/30 text-slate-200 flex flex-col md:flex-row items-start md:items-center gap-4 shadow-inner" id="mandatory-safety-banner">
