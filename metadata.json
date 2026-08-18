@@ -1,7 +1,7 @@
 {
   "name": "SwasthyaVani - AI Public Health Chatbot",
   "description": "AI-Driven Public Health Chatbot for Disease Awareness, Multilingual Symptom Checking, Outbreak Alerts, and Community Health Education.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
 

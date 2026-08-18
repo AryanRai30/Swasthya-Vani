@@ -97,6 +97,18 @@ export const HealthAlertsSection: React.FC<HealthAlertsSectionProps> = ({
       </div>
 
       {/* Filter Tabs */}
+      <div className="p-3.5 rounded-2xl bg-teal-900 text-white text-xs flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <ShieldAlert className="w-4 h-4 text-teal-300 shrink-0" />
+          <span>
+            <strong>Official Surveillance Policy:</strong> Outbreak alerts are strictly sourced from verified administrative authorities (IDSP/NVBDCP/MoHFW). The AI model is strictly prohibited from inventing unverified disease outbreaks.
+          </span>
+        </div>
+        <span className="text-[10px] font-bold uppercase tracking-wider bg-teal-800 text-teal-200 px-2.5 py-1 rounded-lg shrink-0">
+          Admin Verified
+        </span>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
         
         {/* Severity Filters */}

@@ -583,31 +583,32 @@ Please provide an in-depth breakdown of potential conditions, what tests a physi
               
               {/* Triage Risk Meter Header */}
               <div className={`p-6 sm:p-8 rounded-3xl border text-white shadow-xl ${
-                assessmentResult.riskLevel === 'Emergency' ? 'bg-gradient-to-r from-rose-700 to-red-800 border-rose-600' :
-                assessmentResult.riskLevel === 'High' ? 'bg-gradient-to-r from-amber-700 to-amber-900 border-amber-600' :
-                assessmentResult.riskLevel === 'Moderate' ? 'bg-gradient-to-r from-teal-800 to-slate-900 border-teal-700' :
+                assessmentResult.riskLevel.includes('Urgent') || assessmentResult.riskLevel.includes('Emergency') || assessmentResult.riskLevel.includes('🔴') 
+                  ? 'bg-gradient-to-r from-rose-700 to-red-800 border-rose-600' :
+                assessmentResult.riskLevel.includes('consultation') || assessmentResult.riskLevel.includes('High') || assessmentResult.riskLevel.includes('🟡') 
+                  ? 'bg-gradient-to-r from-amber-700 to-amber-900 border-amber-600' :
                 'bg-gradient-to-r from-emerald-700 to-teal-800 border-emerald-600'
               }`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 border border-white/30">
-                      Triage Assessment Result
+                      Triage Risk Assessment Result
                     </span>
-                    <h2 className="text-2xl sm:text-3xl font-black mt-2">
-                      Estimated Risk Level: {assessmentResult.riskLevel}
+                    <h2 className="text-2xl sm:text-3xl font-black mt-2 flex items-center gap-2">
+                      {assessmentResult.riskLevel}
                     </h2>
                     <p className="text-xs text-white/80 mt-1 max-w-xl">
-                      Based on {selectedSymptoms.length} reported symptoms over {duration} with severity rating {severity}/10.
+                      Evaluated for {ageGroup} with {selectedSymptoms.length} reported symptom(s) over {duration} (severity {severity}/10).
                     </p>
                   </div>
 
-                  {assessmentResult.riskLevel === 'Emergency' && (
+                  {(assessmentResult.riskLevel.includes('Urgent') || assessmentResult.riskLevel.includes('Emergency') || assessmentResult.riskLevel.includes('🔴')) && (
                     <button
                       onClick={onOpenEmergency}
                       className="px-5 py-3 rounded-2xl bg-white hover:bg-rose-50 text-rose-900 font-extrabold text-xs shadow-lg transition flex items-center gap-2 shrink-0 animate-pulse"
                     >
                       <PhoneCall className="w-4 h-4 text-rose-600" />
-                      <span>Call 108 Ambulance</span>
+                      <span>Dial 108 (Ambulance)</span>
                     </button>
                   )}
                 </div>

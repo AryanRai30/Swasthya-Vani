@@ -5,17 +5,19 @@ import {
   User, 
   Sparkles, 
   Globe, 
-  ShieldAlert, 
   Trash2, 
   Copy, 
   Check, 
   Volume2, 
   VolumeX, 
-  Info, 
   RefreshCw, 
   CheckCircle2, 
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  ShieldCheck,
+  RotateCcw,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { SUPPORTED_LANGUAGES } from '../data/translations';
@@ -37,45 +39,106 @@ export const ChatbotSection: React.FC<ChatbotSectionProps> = ({
     {
       id: 'welcome-msg',
       sender: 'ai',
-      text: `Namaste & Welcome to **SwasthyaVani Public Health Assistant**. 
+      text: `### 🩺 SwasthyaVani Public Health Assistant
 
-I am your dedicated AI guide for **disease awareness, symptom triage education, and preventive healthcare**, synthesizing official protocols from **ICMR, MoHFW, and WHO**.
+**Answer:**
+Namaste! I am your AI Public Health Awareness Assistant for **disease education, symptom awareness, and preventive health guidance**, synthesized from official **ICMR, MoHFW, and WHO** protocols.
 
-*You can ask me questions such as:*
-* 🦟 *"What are the critical warning signs of Dengue during monsoon?"*
-* 🦠 *"How does Malaria spread and how can I protect my children?"*
-* 🫁 *"What are the key symptoms of Tuberculosis and how to access free DOTS treatment?"*
-* 💧 *"What is the standard Oral Rehydration Salt (ORS) recipe for acute diarrhea?"*
-* 🐕 *"What is the immediate emergency first-aid for an animal scratch or dog bite?"*
+**Key Points:**
+* I can help explain diseases, transmission vectors, prevention steps, and warning signs.
+* I support inquiries in **English**, **हिंदी (Hindi)**, and **Hinglish**.
+* I **do not** provide medical diagnoses or prescribe prescription drug dosages.
 
-*Please select your preferred language above or type your health question below.*`,
+**What to Do Next:**
+* Choose a quick topic from below or type your health question in the input field.
+
+**Sources & References:**
+* Ministry of Health & Family Welfare (MoHFW), Indian Council of Medical Research (ICMR), WHO
+
+**Medical Disclaimer:**
+*This information is for health awareness and does not constitute a medical diagnosis or replace professional medical advice.*`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       sources: ['Ministry of Health & Family Welfare (MoHFW)', 'Indian Council of Medical Research (ICMR)', 'World Health Organization (WHO)'],
       suggestedQuestions: [
-        'What are the warning signs of Dengue?',
-        'How to prevent Malaria during monsoon?',
-        'Is Tuberculosis completely curable?',
-        'What is the immediate first aid for dog bites?'
+        'What are the symptoms of dengue?',
+        'How can I prevent malaria?',
+        'डेंगू से कैसे बचें?',
+        'TB kaise spread hota hai?',
+        'What is hypertension?'
       ]
     }
   ]);
 
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [lastFailedPrompt, setLastFailedPrompt] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  const handleToggleVoiceInput = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser window. You can type your query in the input bar.');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = selectedLanguage === 'hi' ? 'hi-IN' : 'en-IN';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setInputMessage(transcript);
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition notice:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (e) {
+      console.error('Failed to start voice input:', e);
+      setIsListening(false);
+    }
+  };
 
   const currentLang = SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage) || SUPPORTED_LANGUAGES[0];
 
   const suggestedPrompts = [
-    'What are the 3 distinct phases of Dengue fever?',
-    'How does Malaria spread and how to use bed nets properly?',
-    'What are early signs of Tuberculosis & is testing free?',
-    'What should I do immediately for a stray dog bite or scratch?',
-    'How do I prepare home ORS solution for watery diarrhea?',
-    'Why is high blood pressure called the "Silent Killer"?'
+    'What are the symptoms of dengue?',
+    'How can I prevent malaria?',
+    'डेंगू से कैसे बचें?',
+    'TB kaise spread hota hai?',
+    'What is hypertension?',
+    'What medicine dosage should I take for fever?',
+    'Do I have malaria if I have chills and fever?'
   ];
 
   // Auto-scroll to bottom of chat
@@ -99,6 +162,8 @@ I am your dedicated AI guide for **disease awareness, symptom triage education, 
     const text = (textToSend || inputMessage).trim();
     if (!text || isLoading) return;
 
+    setLastFailedPrompt(null);
+
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       sender: 'user',
@@ -118,7 +183,10 @@ I am your dedicated AI guide for **disease awareness, symptom triage education, 
         body: JSON.stringify({
           message: text,
           language: currentLang.name,
-          history: messages.slice(-4).map(m => ({ role: m.sender === 'user' ? 'user' : 'model', text: m.text }))
+          history: messages.slice(-6).map(m => ({ 
+            role: m.sender === 'user' ? 'user' : 'model', 
+            text: m.text 
+          }))
         })
       });
 
@@ -134,6 +202,7 @@ I am your dedicated AI guide for **disease awareness, symptom triage education, 
         text: data.text || 'I could not retrieve an answer. Please try rephrasing your question.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         sources: data.sources || ['Indian Council of Medical Research (ICMR)', 'World Health Organization (WHO)'],
+        knowledgeBaseRef: data.knowledgeBaseRef,
         warningLevel: data.warningLevel || 'normal',
         suggestedQuestions: data.suggestedQuestions
       };
@@ -141,23 +210,24 @@ I am your dedicated AI guide for **disease awareness, symptom triage education, 
       setMessages(prev => [...prev, aiMsg]);
     } catch (err) {
       console.error('Chat error:', err);
-      // Fallback message
+      setLastFailedPrompt(text);
+      
       const errorAiMsg: ChatMessage = {
-        id: `ai-${Date.now()}`,
+        id: `ai-err-${Date.now()}`,
         sender: 'ai',
-        text: `### ℹ️ Public Health Information
+        text: `### ⚠️ Connection Notice
 
-Thank you for your question regarding **"${text}"**.
+We encountered a temporary network delay in contacting the health assistant. 
 
-**General Healthcare Recommendations:**
-* If you or your family member are experiencing acute symptoms like fever over 101°F, persistent cough >2 weeks, severe headache, or gastrointestinal distress, visit your nearest **Primary Health Centre (PHC)** or government hospital for clinical evaluation.
-* **Stay Hydrated:** Drink plenty of boiled clean water and Oral Rehydration Salts (ORS) for fluid replenishment.
-* **Avoid Self-Medication:** Do not consume prescription antibiotics without a doctor's prescription.
+**What to Do Next:**
+* Please click the **Retry Question** button below to resend your query.
+* If you or a family member is in immediate medical distress, call **108** for ambulance support or visit your nearest hospital emergency ward.
 
-*Always dial **108** for immediate emergency ambulance services.*`,
+**Medical Disclaimer:**
+*This information is for health awareness and does not constitute a medical diagnosis or replace professional medical advice.*`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         sources: ['Ministry of Health & Family Welfare (MoHFW)'],
-        warningLevel: 'normal'
+        warningLevel: 'caution'
       };
       setMessages(prev => [...prev, errorAiMsg]);
     } finally {
@@ -179,8 +249,13 @@ Thank you for your question regarding **"${text}"**.
         return;
       }
       window.speechSynthesis.cancel();
-      // Strip markdown symbols for speech
-      const cleanText = text.replace(/[#*`_]/g, '');
+      // Clean markdown characters for pleasant speech
+      const cleanText = text
+        .replace(/###/g, '')
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/`/g, '')
+        .replace(/_/g, '');
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.onend = () => setSpeakingId(null);
       utterance.onerror = () => setSpeakingId(null);
@@ -195,11 +270,21 @@ Thank you for your question regarding **"${text}"**.
         {
           id: 'welcome-reset',
           sender: 'ai',
-          text: 'Conversation reset. How can I assist your health and disease awareness questions today?',
+          text: `### 🩺 SwasthyaVani Public Health Assistant
+
+**Answer:**
+Conversation reset. How can I assist your health and disease awareness questions today?
+
+**What to Do Next:**
+* You can ask about dengue warning signs, malaria prevention, TB DOTS treatment, blood pressure regulation, or vaccine schedules.
+
+**Medical Disclaimer:**
+*This information is for health awareness and does not constitute a medical diagnosis or replace professional medical advice.*`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           sources: ['Ministry of Health & Family Welfare (MoHFW)']
         }
       ]);
+      setLastFailedPrompt(null);
     }
   };
 
@@ -216,12 +301,13 @@ Thank you for your question regarding **"${text}"**.
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-slate-900">AI Public Health Assistant</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200">
-                Verified Medical Protocol
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-teal-700" />
+                Verified Guidelines
               </span>
             </div>
             <p className="text-xs text-slate-500">
-              Guidance grounded in ICMR, MoHFW, and WHO public health standards
+              Evidence-based public health guidance aligned with ICMR, MoHFW, and WHO
             </p>
           </div>
         </div>
@@ -258,11 +344,10 @@ Thank you for your question regarding **"${text}"**.
 
       </div>
 
-
       {/* Suggested Question Chips */}
       <div className="space-y-1.5">
         <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">
-          Quick Topics & Common Inquiries
+          Suggested Inquiries & Verification Queries
         </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           {suggestedPrompts.map((prompt, idx) => (
@@ -294,7 +379,7 @@ Thank you for your question regarding **"${text}"**.
               )}
 
               {/* Message Bubble */}
-              <div className={`max-w-[85%] sm:max-w-[75%] space-y-2 ${isUser ? 'items-end' : 'items-start'}`}>
+              <div className={`max-w-[88%] sm:max-w-[80%] space-y-2 ${isUser ? 'items-end' : 'items-start'}`}>
                 
                 <div
                   className={`p-4 sm:p-5 rounded-3xl text-xs sm:text-sm leading-relaxed ${
@@ -313,6 +398,53 @@ Thank you for your question regarding **"${text}"**.
                     {msg.text.split('\n').map((line, lIdx) => {
                       if (line.startsWith('### ')) {
                         return <h4 key={lIdx} className="font-extrabold text-sm sm:text-base text-slate-900 mt-2 mb-1">{line.replace('### ', '')}</h4>;
+                      }
+                      if (line.startsWith('**Answer:**') || line.startsWith('**उत्तर (Answer):**')) {
+                        return (
+                          <div key={lIdx} className="mt-2 mb-1">
+                            <span className="font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60 text-xs">
+                              {line.includes('उत्तर') ? 'उत्तर (Answer)' : 'Answer'}
+                            </span>
+                          </div>
+                        );
+                      }
+                      if (line.startsWith('**Key Points:**') || line.startsWith('**मुख्य बिंदु (Key Points):**')) {
+                        return (
+                          <div key={lIdx} className="mt-3 mb-1 font-bold text-slate-900 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-teal-600"></span>
+                            {line.includes('मुख्य') ? 'मुख्य बिंदु (Key Points):' : 'Key Points:'}
+                          </div>
+                        );
+                      }
+                      if (line.startsWith('**Warning Signs') || line.startsWith('**चेतावनी के संकेत')) {
+                        return (
+                          <div key={lIdx} className="mt-3 mb-1 font-bold text-rose-800 flex items-center gap-1.5 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">
+                            <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                            {line.replace(/\*\*/g, '')}
+                          </div>
+                        );
+                      }
+                      if (line.startsWith('**What to Do Next:**') || line.startsWith('**आगे क्या करें (What to do next):**')) {
+                        return (
+                          <div key={lIdx} className="mt-3 mb-1 font-bold text-slate-900 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                            {line.includes('आगे क्या करें') ? 'आगे क्या करें (What to do next):' : 'What to Do Next:'}
+                          </div>
+                        );
+                      }
+                      if (line.startsWith('**Sources & References:**') || line.startsWith('**स्रोत (Sources):**')) {
+                        return (
+                          <div key={lIdx} className="mt-3 text-[11px] font-bold text-slate-500">
+                            {line.includes('स्रोत') ? 'सत्यापित स्रोत (Sources):' : 'Verified Sources & References:'}
+                          </div>
+                        );
+                      }
+                      if (line.startsWith('**Medical Disclaimer:**') || line.startsWith('**चिकित्सा अस्वीकरण (Medical Disclaimer):**') || line.startsWith('*This information is for health awareness') || line.startsWith('*यह जानकारी स्वास्थ्य जागरूकता')) {
+                        return (
+                          <div key={lIdx} className="mt-3 pt-2 border-t border-slate-200/80 text-[10px] text-slate-500 italic">
+                            {line.replace(/\*\*/g, '')}
+                          </div>
+                        );
                       }
                       if (line.startsWith('* **') || line.startsWith('- **')) {
                         const parts = line.split('**');
@@ -335,18 +467,27 @@ Thank you for your question regarding **"${text}"**.
                     })}
                   </div>
 
-                  {/* Sources Tag */}
-                  {msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-slate-200/80 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
-                      <span className="font-bold text-slate-600 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
-                        Verified Sources:
-                      </span>
-                      {msg.sources.map((src, sIdx) => (
-                        <span key={sIdx} className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 text-[10px] font-medium">
-                          {src}
-                        </span>
-                      ))}
+                  {/* Source Transparency & Knowledge Base Reference */}
+                  {((msg.sources && msg.sources.length > 0) || msg.knowledgeBaseRef) && (
+                    <div className="mt-3 pt-3 border-t border-slate-200/80 space-y-1.5 text-[11px] text-slate-500">
+                      {msg.sources && msg.sources.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-bold text-slate-600 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
+                            Verified Sources:
+                          </span>
+                          {msg.sources.map((src, sIdx) => (
+                            <span key={sIdx} className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 text-[10px] font-medium shadow-2xs">
+                              {src}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {msg.knowledgeBaseRef && (
+                        <div className="text-[10px] text-slate-400 font-mono">
+                          📁 <span className="font-semibold text-slate-500">KB Reference:</span> {msg.knowledgeBaseRef}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -425,6 +566,20 @@ Thank you for your question regarding **"${text}"**.
           </div>
         )}
 
+        {/* Retry Button if last message failed */}
+        {lastFailedPrompt && !isLoading && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-2 text-xs text-amber-900">
+            <span>Query failed to send: <strong>"{lastFailedPrompt}"</strong></span>
+            <button
+              onClick={() => handleSendMessage(lastFailedPrompt)}
+              className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold flex items-center gap-1.5 transition"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Retry Question
+            </button>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -443,11 +598,30 @@ Thank you for your question regarding **"${text}"**.
             id="chat-input-field"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            placeholder={`Ask a question in ${currentLang.nativeName} about fever, dengue, malaria, vaccines...`}
-            className="w-full py-3.5 pl-4 pr-12 rounded-2xl border border-slate-300 bg-white text-xs sm:text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-teal-500 focus:border-teal-500 shadow-xs transition placeholder:text-slate-400"
+            placeholder={isListening ? '🎙️ Listening... speak your question clearly...' : `Ask in ${currentLang.nativeName} about dengue symptoms, malaria prevention, TB, hypertension...`}
+            className={`w-full py-3.5 pl-4 pr-12 rounded-2xl border bg-white text-xs sm:text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-teal-500 focus:border-teal-500 shadow-xs transition placeholder:text-slate-400 ${
+              isListening ? 'border-rose-400 ring-2 ring-rose-400/30 bg-rose-50/20' : 'border-slate-300'
+            }`}
             disabled={isLoading}
           />
         </div>
+
+        {/* Optional Voice Speech-to-Text Input Button */}
+        <button
+          type="button"
+          onClick={handleToggleVoiceInput}
+          id="chat-voice-btn"
+          disabled={isLoading}
+          className={`p-3.5 rounded-2xl border transition shadow-xs flex items-center justify-center shrink-0 ${
+            isListening 
+              ? 'bg-rose-600 border-rose-600 text-white animate-pulse shadow-md shadow-rose-600/30 ring-4 ring-rose-300' 
+              : 'bg-white border-slate-300 hover:bg-slate-50 text-slate-700 hover:text-teal-700'
+          }`}
+          title={isListening ? 'Stop recording voice' : 'Click to speak question via microphone'}
+          aria-label="Voice input"
+        >
+          {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+        </button>
 
         <button
           type="submit"

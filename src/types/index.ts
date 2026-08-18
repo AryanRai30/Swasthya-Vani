@@ -52,6 +52,7 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   sources?: string[];
+  knowledgeBaseRef?: string;
   warningLevel?: 'normal' | 'caution' | 'emergency';
   language?: string;
   suggestedQuestions?: string[];
@@ -88,8 +89,17 @@ export interface DiseaseMatch {
   riskCategory: 'Low' | 'Moderate' | 'High' | 'Severe';
 }
 
+export type SymptomRiskLevel = 
+  | '🟢 Low concern' 
+  | '🟡 Medical consultation recommended' 
+  | '🔴 Urgent medical attention recommended'
+  | 'Low' 
+  | 'Moderate' 
+  | 'High' 
+  | 'Emergency';
+
 export interface SymptomCheckResult {
-  riskLevel: 'Low' | 'Moderate' | 'High' | 'Emergency';
+  riskLevel: SymptomRiskLevel;
   matchingDiseases: DiseaseMatch[];
   recommendations: string[];
   emergencyAdvice?: string;

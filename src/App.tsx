@@ -13,6 +13,7 @@ import { ChatbotSection } from './components/ChatbotSection';
 import { DiseaseLibrarySection } from './components/DiseaseLibrarySection';
 import { SymptomCheckerSection } from './components/SymptomCheckerSection';
 import { HealthAlertsSection } from './components/HealthAlertsSection';
+import { HealthFacilitiesSection } from './components/HealthFacilitiesSection';
 import { AdminSection } from './components/AdminSection';
 import { INITIAL_HEALTH_ALERTS } from './data/healthAlerts';
 import { HealthAlert, UserProfile } from './types';
@@ -129,11 +130,31 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'facilities' && (
+          <HealthFacilitiesSection
+            onAskAi={handleAskAi}
+            onOpenEmergency={() => setIsEmergencyModalOpen(true)}
+          />
+        )}
+
         {activeTab === 'admin' && (
           <AdminSection
             alerts={alerts}
+            user={user}
             onAddAlert={handleAddAlert}
             onToggleAlertStatus={handleToggleAlertStatus}
+            onSwitchToAdmin={() => {
+              setUser({
+                id: 'admin-1',
+                name: 'Dr. Rajesh Sharma (IDSP Epidemiologist)',
+                email: 'rajesh.sharma@nhm.gov.in',
+                role: 'ADMIN',
+                preferredLanguage: 'en',
+                bookmarkedDiseaseIds: [],
+                savedAssessmentsCount: 12
+              });
+            }}
+            onReturnHome={() => setActiveTab('home')}
           />
         )}
       </main>

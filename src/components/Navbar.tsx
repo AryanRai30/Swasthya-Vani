@@ -13,9 +13,10 @@ import {
   Menu, 
   X, 
   ShieldCheck,
-  ChevronDown
+  ChevronDown,
+  Building2
 } from 'lucide-react';
-import { SUPPORTED_LANGUAGES } from '../data/translations';
+import { SUPPORTED_LANGUAGES, UI_TRANSLATIONS } from '../data/translations';
 import { UserProfile } from '../types';
 
 interface NavbarProps {
@@ -45,14 +46,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
 
   const currentLang = SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage) || SUPPORTED_LANGUAGES[0];
+  const t = UI_TRANSLATIONS[selectedLanguage] || UI_TRANSLATIONS['en'];
 
   const navItems = [
-    { id: 'home', label: 'Home', icon: HeartHandshake },
-    { id: 'chat', label: 'AI Health Assistant', icon: Bot, badge: 'AI' },
-    { id: 'symptom-checker', label: 'Symptom Checker', icon: Stethoscope },
-    { id: 'disease-library', label: 'Disease Library', icon: BookOpen },
-    { id: 'health-alerts', label: 'Health Alerts', icon: AlertTriangle, badgeCount: activeAlertsCount },
-    ...(user?.role === 'ADMIN' ? [{ id: 'admin', label: 'Admin Portal', icon: ShieldCheck, badge: 'Admin' }] : [])
+    { id: 'home', label: selectedLanguage === 'hi' ? 'मुख्य पृष्ठ' : 'Home', icon: HeartHandshake },
+    { id: 'chat', label: t.askAi || 'AI Health Assistant', icon: Bot, badge: 'AI' },
+    { id: 'symptom-checker', label: t.checkSymptoms || 'Symptom Checker', icon: Stethoscope },
+    { id: 'disease-library', label: t.exploreDiseases || 'Disease Library', icon: BookOpen },
+    { id: 'health-alerts', label: t.healthAlerts || 'Health Alerts', icon: AlertTriangle, badgeCount: activeAlertsCount },
+    { id: 'facilities', label: t.healthFacilities || 'Health Facilities', icon: Building2 },
+    { id: 'admin', label: t.adminDashboard || 'Admin Portal', icon: ShieldCheck, badge: 'Nodal' }
   ];
 
   const handleNavClick = (id: string) => {
